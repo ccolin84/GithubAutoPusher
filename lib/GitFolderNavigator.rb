@@ -1,0 +1,2 @@
+class GitFolderNavigator
+end
