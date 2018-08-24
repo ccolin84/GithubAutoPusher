@@ -1,27 +1,55 @@
+require 'logger'
+
 class GithubAutoPusher
   VERSION = "0.1.0" 
-  UPDATE_INTERVAL = 30 * 60 
+
+  ###
+  # default options for IoC (dependency injection)
+  ###
+  DEFAULT_UPDATE_INTERVAL = 60 * 30
   DEFAULT_COMMIT_MESSAGE = "scheduled auto commit"
+  DEFAULT_WAIT = Proc.new { |ms| sleep ms }
+  # run forever by default
+  DEFAULT_FINISHED_LOOPING = Proc.new { |num_loops| false }
 
   def initialize(
     filesystem: Dir,
-    interval: UPDATE_INTERVAL,
-    wait: ->(milli_seconds) { wait milli_seconds }
+    interval: DEFAULT_UPDATE_INTERVAL,
+    wait: DEFAULT_WAIT,
+    finished_looping: DEFAULT_FINISHED_LOOPING,
+    logger: Logger.new(STDOUT) 
   )
     @interval = interval
     @filesystem = filesystem
-    @wait = ->(milli_seconds) { wait milli_seconds }
+    @wait = wait 
+    @finished_looping = finished_looping
+    @logger = logger
   end
 
   def start
-    run_loop
+    if in_git_repo?
+      run_loop
+    else
+      @logger.error("You're not in a git repo!")
+    end
   end
 
   def run_loop
-    while true
+    num_loops = 0
+    until @finished_looping.call(num_loops)
       @wait.call(@interval)
-      update_repo
+      update_repo_with_log
+      num_loops += 1
     end
+  end
+
+  def update_repo_with_log
+    update_repo
+    log_repo_update
+  end
+
+  def log_repo_update 
+    @logger.info("updated current branch: #{git_current_branch}")
   end
 
   def update_repo
