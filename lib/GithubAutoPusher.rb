@@ -28,7 +28,7 @@ class GithubAutoPusher
 
   def start
     if in_git_repo?
-      @logger.run("running on branch #{git_current_branch}")
+      @logger.info("running on branch #{git_current_branch}")
       run_loop
     else
       @logger.error("You're not in a git repo!")
