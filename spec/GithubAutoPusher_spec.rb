@@ -2,7 +2,7 @@ class MockDir
   def initialize(entries: [])
     @entries = entries
   end
-  def entries
+  def entries(some_dir)
     @entries
   end
 end
