@@ -30,7 +30,26 @@ RSpec.describe GithubAutoPusher do
 
   describe "#run_loop" do
     context "a time interval is passed in the constructor" do
-      it "runs at the provided interval" do
+      it "runs update_repo once in one interval" do
+        finished_looping_mock = Proc.new do |num_loops|
+          num_loops > 1
+        end
+        gh_auto_pusher = GithubAutoPusher.new(
+          interval: 500,
+          finished_looping?: finished_looping_mock
+        )
+        allow(gh_auto_pusher).to receive(:update_repo)
+
+        gh_auto_pusher.run_loop
+
+        expect(gh_auto_pusher).to have_received(:update_repo).once
+      end
+
+      it "runs update_repo twice in intervals" do
+        fail "TODO"
+      end
+
+      it "runs at the user provided rate" do
         fail "TODO"
       end
     end
