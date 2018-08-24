@@ -5,9 +5,8 @@ RSpec.describe GithubAutoPusher do
 
   describe "#update_repo" do
     it "runs #git_add, #git_commit, and #git_push" do
-      # gh_auto_pusher = GithubAutoPusher.new
       gh_auto_pusher = GithubAutoPusher.new
-      # allow(gh_auto_pusher).to receive(:git_add)
+      allow(gh_auto_pusher).to receive(:git_add)
       allow(gh_auto_pusher).to receive(:git_commit)
       allow(gh_auto_pusher).to receive(:git_push)
       allow(gh_auto_pusher).to receive(:update_repo).and_call_original
