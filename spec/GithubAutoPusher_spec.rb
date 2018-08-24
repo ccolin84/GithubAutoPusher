@@ -31,13 +31,14 @@ RSpec.describe GithubAutoPusher do
   describe "#run_loop" do
     context "a time interval is passed in the constructor" do
       it "runs update_repo once in one interval" do
-        finished_looping_mock = Proc.new do |num_loops|
-          num_loops > 1
-        end
+        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
         gh_auto_pusher = GithubAutoPusher.new(
-          interval: 500,
-          finished_looping?: finished_looping_mock
+          interval: 0.5,
+          finished_looping: finished_looping_mock
         )
+        allow(gh_auto_pusher).to receive(:git_add)
+        allow(gh_auto_pusher).to receive(:git_commit)
+        allow(gh_auto_pusher).to receive(:git_push)
         allow(gh_auto_pusher).to receive(:update_repo)
 
         gh_auto_pusher.run_loop
@@ -46,17 +47,67 @@ RSpec.describe GithubAutoPusher do
       end
 
       it "runs update_repo twice in intervals" do
-        fail "TODO"
+        finished_looping_mock = Proc.new { |num_loops| num_loops > 1 }
+        gh_auto_pusher = GithubAutoPusher.new(
+          interval: 0.5,
+          finished_looping: finished_looping_mock
+        )
+        allow(gh_auto_pusher).to receive(:git_add)
+        allow(gh_auto_pusher).to receive(:git_commit)
+        allow(gh_auto_pusher).to receive(:git_push)
+        allow(gh_auto_pusher).to receive(:update_repo)
+
+        gh_auto_pusher.run_loop
+
+        expect(gh_auto_pusher).to have_received(:update_repo).twice
       end
 
       it "runs at the user provided rate" do
-        fail "TODO"
+        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
+        mock_interval = 0.5
+        gh_auto_pusher = GithubAutoPusher.new(
+          interval: mock_interval,
+          finished_looping: finished_looping_mock
+        )
+        allow(gh_auto_pusher).to receive(:git_add)
+        allow(gh_auto_pusher).to receive(:git_commit)
+        allow(gh_auto_pusher).to receive(:git_push)
+        allow(gh_auto_pusher).to receive(:update_repo)
+
+        start = Time.now
+        gh_auto_pusher.run_loop
+        finish = Time.now
+        duration = finish - start
+        delta_duration_vs_interval = (duration - mock_interval).abs
+        difference_tolerance = mock_interval* 0.05
+
+        expect(delta_duration_vs_interval).to be < difference_tolerance
+        expect(gh_auto_pusher).to have_received(:update_repo).once
       end
     end
 
     context "a time interval is not passed in the constructor" do
       it "runs at the default interval" do
-        fail "TODO"
+        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
+        old_default_update_interval = GithubAutoPusher::DEFAULT_UPDATE_INTERVAL
+        GithubAutoPusher::DEFAULT_UPDATE_INTERVAL = 0.5
+        gh_auto_pusher = GithubAutoPusher.new(finished_looping: finished_looping_mock)
+        allow(gh_auto_pusher).to receive(:git_add)
+        allow(gh_auto_pusher).to receive(:git_commit)
+        allow(gh_auto_pusher).to receive(:git_push)
+        allow(gh_auto_pusher).to receive(:update_repo)
+
+        start = Time.now
+        gh_auto_pusher.run_loop
+        finish = Time.now
+        duration = finish - start
+        delta_duration_vs_interval = (duration - GithubAutoPusher::DEFAULT_UPDATE_INTERVAL).abs
+        difference_tolerance = GithubAutoPusher::DEFAULT_UPDATE_INTERVAL * 0.05
+
+        expect(delta_duration_vs_interval).to be < difference_tolerance
+        expect(gh_auto_pusher).to have_received(:update_repo).once
+
+        GithubAutoPusher::DEFAULT_UPDATE_INTERVAL = old_default_update_interval
       end
     end
   end
