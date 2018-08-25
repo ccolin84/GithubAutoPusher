@@ -1,27 +1,29 @@
 require 'logger'
 
+# Class to handle automatically pushing a git
+# repo on a set interval
 class GithubAutoPusher
-  VERSION = "0.1.0" 
+  VERSION = '0.1.0'
 
   ###
   # default options for IoC (dependency injection)
   ###
   DEFAULT_UPDATE_INTERVAL = 60 * 30
-  DEFAULT_COMMIT_MESSAGE = "scheduled auto commit"
-  DEFAULT_WAIT = Proc.new { |ms| sleep ms }
+  DEFAULT_COMMIT_MESSAGE = 'scheduled auto commit'
+  DEFAULT_WAIT = proc { |ms| sleep ms }
   # run forever by default
-  DEFAULT_FINISHED_LOOPING = Proc.new { |num_loops| false }
+  DEFAULT_FINISHED_LOOPING = proc { |_num_loops| false }
 
   def initialize(
     filesystem: Dir,
     interval: DEFAULT_UPDATE_INTERVAL,
     wait: DEFAULT_WAIT,
     finished_looping: DEFAULT_FINISHED_LOOPING,
-    logger: Logger.new(STDOUT) 
+    logger: Logger.new(STDOUT)
   )
     @interval = interval
     @filesystem = filesystem
-    @wait = wait 
+    @wait = wait
     @finished_looping = finished_looping
     @logger = logger
   end
@@ -49,7 +51,7 @@ class GithubAutoPusher
     log_repo_update
   end
 
-  def log_repo_update 
+  def log_repo_update
     @logger.info("updated current branch: #{git_current_branch}")
   end
 
@@ -60,10 +62,11 @@ class GithubAutoPusher
   end
 
   def in_git_repo?
-    @filesystem.entries(".").any? { |x| x == ".git"}
+    @filesystem.entries('.').any? { |x| x == '.git' }
   end
 
   private
+
   def git_add
     `git add .`
   end
