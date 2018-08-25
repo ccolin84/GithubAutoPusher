@@ -4,7 +4,8 @@ class MockDir
   def initialize(entries: [])
     @entries = entries
   end
-  def entries(some_dir)
+
+  def entries(_some_dir)
     @entries
   end
 end
@@ -16,12 +17,12 @@ def time_block
 end
 
 RSpec.describe GithubAutoPusher do
-  it "has a version number" do
+  it 'hss a version number' do
     expect(GithubAutoPusher::VERSION).not_to be nil
   end
 
-  describe "#update_repo" do
-    it "runs #git_add, #git_commit, and #git_push" do
+  describe '#update_repo' do
+    it 'runs #git_add, #git_commit, and #git_push' do
       gh_auto_pusher = GithubAutoPusher.new(wait: ->(x) {})
       allow(gh_auto_pusher).to receive(:git_add)
       allow(gh_auto_pusher).to receive(:git_commit)
@@ -29,7 +30,7 @@ RSpec.describe GithubAutoPusher do
       allow(gh_auto_pusher).to receive(:update_repo_with_log).and_call_original
 
       gh_auto_pusher.update_repo
-      
+
       expect(gh_auto_pusher).to have_received(:git_add).once
       expect(gh_auto_pusher).to have_received(:git_commit).once
       expect(gh_auto_pusher).to have_received(:git_push).once
@@ -37,9 +38,9 @@ RSpec.describe GithubAutoPusher do
   end
 
   describe "#run_loop" do
-    context "a time interval is passed in the constructor" do
-      it "runs update_repo once in one interval" do
-        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
+    context 'a time interval is passed in the constructor' do
+      it 'runs update_repo once in one interval' do
+        finished_looping_mock = proc { |num_loops| num_loops > 0 }
         gh_auto_pusher = GithubAutoPusher.new(
           interval: 0.5,
           finished_looping: finished_looping_mock
@@ -51,8 +52,8 @@ RSpec.describe GithubAutoPusher do
         expect(gh_auto_pusher).to have_received(:update_repo_with_log).once
       end
 
-      it "runs update_repo twice in intervals" do
-        finished_looping_mock = Proc.new { |num_loops| num_loops > 1 }
+      it 'runs update_repo twice in intervals' do
+        finished_looping_mock = proc { |num_loops| num_loops > 1 }
         gh_auto_pusher = GithubAutoPusher.new(
           interval: 0.5,
           finished_looping: finished_looping_mock
@@ -64,8 +65,8 @@ RSpec.describe GithubAutoPusher do
         expect(gh_auto_pusher).to have_received(:update_repo_with_log).twice
       end
 
-      it "runs at the user provided rate" do
-        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
+      it 'runs at the user provided rate' do
+        finished_looping_mock = proc { |num_loops| num_loops > 0 }
         mock_interval = 0.5
         gh_auto_pusher = GithubAutoPusher.new(
           interval: mock_interval,
@@ -75,25 +76,29 @@ RSpec.describe GithubAutoPusher do
 
         duration = time_block { gh_auto_pusher.run_loop }
         delta_duration_vs_interval = (duration - mock_interval).abs
-        difference_tolerance = mock_interval* 0.05
+        difference_tolerance = mock_interval * 0.05
 
         expect(delta_duration_vs_interval).to be < difference_tolerance
         expect(gh_auto_pusher).to have_received(:update_repo_with_log).once
       end
     end
 
-    context "a time interval is not passed in the constructor" do
-      it "runs at the default interval" do
-        finished_looping_mock = Proc.new { |num_loops| num_loops > 0 }
+    context 'a time interval is not passed in the constructor' do
+      it 'runs at the default interval' do
+        finished_looping_mock = proc { |num_loops| num_loops > 0 }
         # change the default update interval for testing
         # as the normal default is too long
         old_default_update_interval = GithubAutoPusher::DEFAULT_UPDATE_INTERVAL
         GithubAutoPusher::DEFAULT_UPDATE_INTERVAL = 0.5
-        gh_auto_pusher = GithubAutoPusher.new(finished_looping: finished_looping_mock)
+        gh_auto_pusher = GithubAutoPusher.new(
+          finished_looping: finished_looping_mock
+        )
         allow(gh_auto_pusher).to receive(:update_repo_with_log)
 
         duration = time_block { gh_auto_pusher.run_loop }
-        delta_duration_vs_interval = (duration - GithubAutoPusher::DEFAULT_UPDATE_INTERVAL).abs
+        delta_duration_vs_interval = (
+          duration - GithubAutoPusher::DEFAULT_UPDATE_INTERVAL
+        ).abs
         difference_tolerance = GithubAutoPusher::DEFAULT_UPDATE_INTERVAL * 0.05
 
         expect(delta_duration_vs_interval).to be < difference_tolerance
@@ -104,11 +109,16 @@ RSpec.describe GithubAutoPusher do
     end
   end
 
-  describe "#start" do
-    context "in a git repo" do
-      it "should call #run_loop" do
+  describe '#start' do
+    context 'in a git repo' do
+      it 'should call #run_loop' do
         mock_dir = MockDir.new(entries: ['.git'])
-        gh_auto_pusher = GithubAutoPusher.new(filesystem: mock_dir)
+        mock_logger = Logger.new(STDOUT)
+        gh_auto_pusher = GithubAutoPusher.new(
+          filesystem: mock_dir,
+          logger: mock_logger
+        )
+        allow(mock_logger).to receive(:info)
         allow(gh_auto_pusher).to receive(:run_loop)
 
         gh_auto_pusher.start
@@ -117,8 +127,8 @@ RSpec.describe GithubAutoPusher do
       end
     end
 
-    context "not in a git repo" do
-      it "should log an error and not call #run_loop" do
+    context 'not in a git repo' do
+      it 'should log an error and not call #run_loop' do
         mock_dir = MockDir.new(entries: [])
         mock_logger = Logger.new(STDOUT)
         gh_auto_pusher = GithubAutoPusher.new(
@@ -136,18 +146,17 @@ RSpec.describe GithubAutoPusher do
     end
   end
 
-  describe "#in_git_repo?" do
-    it "returns true when inside a git repo" do
+  describe '#in_git_repo?' do
+    it 'returns true when inside a git repo' do
       dir_mock = MockDir.new(entries: ['..', '.git', '.'])
       gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock)
       expect(gh_auto_pusher.in_git_repo?).to be true
     end
 
-    it "returns false when outside a git repo" do
+    it 'returns false when outside a git repo' do
       dir_mock = MockDir.new(entries: ['..', '.gity', '.'])
       gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock)
       expect(gh_auto_pusher.in_git_repo?).to be false
     end
   end
 end
-
