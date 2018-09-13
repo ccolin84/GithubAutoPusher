@@ -3,13 +3,13 @@ require 'logger'
 # Class to handle automatically pushing a git
 # repo on a set interval
 class GithubAutoPusher
-  VERSION = '0.1.0'
+  VERSION = '0.1.0'.freeze
 
   ###
   # default options for IoC (dependency injection)
   ###
   DEFAULT_UPDATE_INTERVAL = 60 * 30
-  DEFAULT_COMMIT_MESSAGE = 'scheduled auto commit'
+  DEFAULT_COMMIT_MESSAGE = 'scheduled auto commit'.freeze
   DEFAULT_WAIT = proc { |ms| sleep ms }
   # run forever by default
   DEFAULT_FINISHED_LOOPING = proc { |_num_loops| false }
