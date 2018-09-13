@@ -8,6 +8,9 @@ class MockDir
   def entries(_some_dir)
     @entries
   end
+
+  def chdir(repo_path)
+  end
 end
 
 def time_block
@@ -23,7 +26,11 @@ RSpec.describe GithubAutoPusher do
 
   describe '#update_repo' do
     it 'runs #git_add, #git_commit, and #git_push' do
-      gh_auto_pusher = GithubAutoPusher.new(wait: ->(x) {})
+      gh_auto_pusher = GithubAutoPusher.new(
+        wait: ->(x) {},
+        filesystem: MockDir.new,
+        repo_path: '.'
+      )
       allow(gh_auto_pusher).to receive(:git_add)
       allow(gh_auto_pusher).to receive(:git_commit)
       allow(gh_auto_pusher).to receive(:git_push)
@@ -43,7 +50,9 @@ RSpec.describe GithubAutoPusher do
         finished_looping_mock = proc { |num_loops| num_loops > 0 }
         gh_auto_pusher = GithubAutoPusher.new(
           interval: 0.5,
-          finished_looping: finished_looping_mock
+          finished_looping: finished_looping_mock,
+          filesystem: MockDir.new,
+          repo_path: '.'
         )
         allow(gh_auto_pusher).to receive(:update_repo_with_log)
 
@@ -56,7 +65,9 @@ RSpec.describe GithubAutoPusher do
         finished_looping_mock = proc { |num_loops| num_loops > 1 }
         gh_auto_pusher = GithubAutoPusher.new(
           interval: 0.5,
-          finished_looping: finished_looping_mock
+          finished_looping: finished_looping_mock,
+          filesystem: MockDir.new,
+          repo_path: '.'
         )
         allow(gh_auto_pusher).to receive(:update_repo_with_log)
 
@@ -70,7 +81,9 @@ RSpec.describe GithubAutoPusher do
         mock_interval = 0.5
         gh_auto_pusher = GithubAutoPusher.new(
           interval: mock_interval,
-          finished_looping: finished_looping_mock
+          finished_looping: finished_looping_mock,
+          filesystem: MockDir.new,
+          repo_path: '.'
         )
         allow(gh_auto_pusher).to receive(:update_repo_with_log)
 
@@ -91,7 +104,9 @@ RSpec.describe GithubAutoPusher do
         old_default_update_interval = GithubAutoPusher::DEFAULT_UPDATE_INTERVAL
         GithubAutoPusher::DEFAULT_UPDATE_INTERVAL = 0.5
         gh_auto_pusher = GithubAutoPusher.new(
-          finished_looping: finished_looping_mock
+          finished_looping: finished_looping_mock,
+          filesystem: MockDir.new,
+          repo_path: '.'
         )
         allow(gh_auto_pusher).to receive(:update_repo_with_log)
 
@@ -116,7 +131,8 @@ RSpec.describe GithubAutoPusher do
         mock_logger = Logger.new(STDOUT)
         gh_auto_pusher = GithubAutoPusher.new(
           filesystem: mock_dir,
-          logger: mock_logger
+          logger: mock_logger,
+          repo_path: '.'
         )
         allow(mock_logger).to receive(:info)
         allow(gh_auto_pusher).to receive(:run_loop)
@@ -133,7 +149,8 @@ RSpec.describe GithubAutoPusher do
         mock_logger = Logger.new(STDOUT)
         gh_auto_pusher = GithubAutoPusher.new(
           filesystem: mock_dir,
-          logger: mock_logger
+          logger: mock_logger,
+          repo_path: '.'
         )
         allow(gh_auto_pusher).to receive(:run_loop)
         allow(mock_logger).to receive(:error)
@@ -149,13 +166,13 @@ RSpec.describe GithubAutoPusher do
   describe '#in_git_repo?' do
     it 'returns true when inside a git repo' do
       dir_mock = MockDir.new(entries: ['..', '.git', '.'])
-      gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock)
+      gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock, repo_path: '.')
       expect(gh_auto_pusher.in_git_repo?).to be true
     end
 
     it 'returns false when outside a git repo' do
       dir_mock = MockDir.new(entries: ['..', '.gity', '.'])
-      gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock)
+      gh_auto_pusher = GithubAutoPusher.new(filesystem: dir_mock, repo_path: '.')
       expect(gh_auto_pusher.in_git_repo?).to be false
     end
   end

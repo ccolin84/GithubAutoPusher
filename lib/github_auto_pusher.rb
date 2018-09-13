@@ -19,22 +19,27 @@ class GithubAutoPusher
     interval: DEFAULT_UPDATE_INTERVAL,
     wait: DEFAULT_WAIT,
     finished_looping: DEFAULT_FINISHED_LOOPING,
-    logger: Logger.new(STDOUT)
+    logger: Logger.new(STDOUT),
+    repo_path:
   )
     @interval = interval
     @filesystem = filesystem
     @wait = wait
     @finished_looping = finished_looping
     @logger = logger
+    @repo_path = repo_path
   end
 
   def start
+    @filesystem.chdir(@repo_path)
     if in_git_repo?
       @logger.info("running on branch #{git_current_branch}")
       run_loop
     else
       @logger.error("You're not in a git repo!")
     end
+  rescue => exception
+    @logger.error("#{@repo_path} is not a valid git repo path")
   end
 
   def run_loop
