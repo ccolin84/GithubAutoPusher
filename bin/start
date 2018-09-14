@@ -1,5 +1,25 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
 require './lib/github_auto_pusher'
 
-GithubAutoPusher.new.start
+options = {}
+OptionParser.new do |opts|
+  opts.banner = 'Usage: ./bin/start repo_path [options]'
+
+  opts.on('-m', '--message MESSAGE', 'set the automatic commit MESSAGE') do |m|
+    options[:commit_message] = m
+  end
+
+  opts.on(
+    '-i',
+    '--interval [INTERVAL]',
+    'set the INTERVAL (in seconds) at which the program commits your code'
+  ) do |i|
+    options[:interval] = i.to_i
+  end
+end.parse!
+
+options[:repo_path] = ARGV[0]
+
+GithubAutoPusher.new(options).start

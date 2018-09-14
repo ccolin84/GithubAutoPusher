@@ -10,7 +10,7 @@ class GithubAutoPusher
   ###
   DEFAULT_UPDATE_INTERVAL = 60 * 30
   DEFAULT_COMMIT_MESSAGE = 'scheduled auto commit'.freeze
-  DEFAULT_WAIT = proc { |ms| sleep ms }
+  DEFAULT_WAIT = proc { |seconds| sleep seconds }
   # run forever by default
   DEFAULT_FINISHED_LOOPING = proc { |_num_loops| false }
 
@@ -18,6 +18,7 @@ class GithubAutoPusher
     filesystem: Dir,
     interval: DEFAULT_UPDATE_INTERVAL,
     wait: DEFAULT_WAIT,
+    commit_message: DEFAULT_COMMIT_MESSAGE,
     finished_looping: DEFAULT_FINISHED_LOOPING,
     logger: Logger.new(STDOUT),
     repo_path:
@@ -28,6 +29,7 @@ class GithubAutoPusher
     @finished_looping = finished_looping
     @logger = logger
     @repo_path = repo_path
+    @commit_message = commit_message
   end
 
   def start
@@ -39,6 +41,7 @@ class GithubAutoPusher
       @logger.error("You're not in a git repo!")
     end
   rescue => exception
+    puts exception
     @logger.error("#{@repo_path} is not a valid git repo path")
   end
 
@@ -77,7 +80,7 @@ class GithubAutoPusher
   end
 
   def git_commit
-    `git commit -m "#{DEFAULT_COMMIT_MESSAGE}"`
+    `git commit -m "#{@commit_message}"`
   end
 
   def git_push
