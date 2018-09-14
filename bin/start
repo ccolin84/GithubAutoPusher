@@ -7,7 +7,7 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = 'Usage: ./bin/start repo_path [options]'
 
-  opts.on('-m', '--message MESSAGE', 'set the automatic commit MESSAGE') do |m|
+  opts.on('-m', '--message [MESSAGE]', 'set the automatic commit MESSAGE') do |m|
     options[:commit_message] = m
   end
 
@@ -19,6 +19,11 @@ OptionParser.new do |opts|
     options[:interval] = i.to_i
   end
 end.parse!
+
+unless ARGV[0]
+  puts 'Error: You must provide a valid path to a git repo'
+  exit(1)
+end
 
 options[:repo_path] = ARGV[0]
 
